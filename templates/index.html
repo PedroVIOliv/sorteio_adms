@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sorteio de ADMs</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Sorteio de ADMs</h1>
+    <p><strong>Bloco alvo:</strong> <span id="spanBlocoAlvo"></span></p>
+    <p><strong>Altura atual:</strong> <span id="spanAlturaAtual"></span></p>
+    <p><strong>Status:</strong> <span id="spanStatus"></span></p>
+    <p><strong>Hash:</strong> <span id="spanHash"></span></p>
+
+    <h2>Membros Elegíveis</h2>
+    <ul id="listaElegiveis">
+      <!-- Os membros serão adicionados dinamicamente via JavaScript -->
+    </ul>
+  </div>
+
+  <script>
+    /**
+     * Função de embaralhamento determinístico baseada em um seed.
+     * @param {Array} array - O array a ser embaralhado.
+     * @param {number} seed - A semente para embaralhar.
+     * @returns {Array} - O array embaralhado.
+     */
+    function shuffleWithSeed(array, seed) {
+      const result = [...array];
+      let currentIndex = result.length, randomIndex;
+
+      // Gera números pseudoaleatórios usando o seed
+      const random = () => {
+        const x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+      };
+
+      // Aplica o algoritmo de Fisher-Yates
+      while (currentIndex !== 0) {
+        randomIndex = Math.floor(random() * currentIndex);
+        currentIndex--;
+        [result[currentIndex], result[randomIndex]] = [result[randomIndex], result[currentIndex]];
+      }
+
+      return result;
+    }
+
+    /**
+     * Função que realiza a animação de suspense,
+     * eliminando gradualmente os perdedores até que os vencedores fiquem.
+     */
+     function animacaoSorteio(elegiveis, vencedores, hash, time) {
+        const perdedores = elegiveis.filter(m => !vencedores.includes(m));
+
+        // Converte o hash em um número (pega os primeiros 8 caracteres)
+        const seed = parseInt(hash.slice(-8), 16);
+
+        // Embaralha os perdedores usando o seed
+        const perdedoresEmbaralhados = shuffleWithSeed(perdedores, seed);
+
+        // Remove perdedores gradualmente
+        perdedoresEmbaralhados.forEach((perdedor, index) => {
+            setTimeout(() => {
+            const li = document.querySelector(`#listaElegiveis li[data-membro="${perdedor}"]`);
+            if (li) {
+                // Aplica o efeito de eliminação
+                li.classList.add('removendo');
+                
+                // Aguarda 'time' para completar a animação antes de remover do DOM
+                setTimeout(() => {
+                li.remove();
+                // Se for o último perdedor a ser removido...
+                if (index === perdedoresEmbaralhados.length - 1) {
+                    // ...aguarda mais um pouquinho para destacar os vencedores
+                    setTimeout(() => {
+                    vencedores.forEach(v => {
+                        const liVencedor = document.querySelector(`#listaElegiveis li[data-membro="${v}"]`);
+                        if (liVencedor) {
+                        liVencedor.classList.add('vencedor');
+                        }
+                    });
+                    }, time/10); // Atraso adicional para só destacar depois
+                }
+                }, time);
+            }
+            }, time * (index + 1)); // Intervalo de 1 segundo entre cada eliminação
+        });
+        }
+
+    /**
+     * Atualiza o status da página, chamando o servidor e preenchendo o HTML.
+     */
+    function atualizaStatus() {
+      fetch('/status.json')
+        .then(response => response.json())
+        .then(data => {
+          const { bloco_alvo, altura_atual, status, adms_selecionados, elegiveis, hash } = data;
+
+          // Atualiza as informações na página
+          document.getElementById('spanBlocoAlvo').textContent = bloco_alvo;
+          document.getElementById('spanAlturaAtual').textContent =
+            altura_atual !== null ? altura_atual : 'Indisponível';
+          document.getElementById('spanStatus').textContent = status;
+          document.getElementById('spanHash').textContent = hash || 'Indisponível';
+
+          // Preenche a lista de elegíveis
+          const ul = document.getElementById('listaElegiveis');
+          ul.innerHTML = '';
+          elegiveis.forEach(membro => {
+            const li = document.createElement('li');
+            li.textContent = membro;
+            li.dataset.membro = membro; // Para rastreamento
+            ul.appendChild(li);
+          });
+
+          // Inicia a animação de sorteio se o bloco foi alcançado
+          if (status === 'Bloco alcançado!' && adms_selecionados.length > 0) {
+            clearInterval(intervalId); // Para o polling
+            animacaoSorteio(elegiveis, adms_selecionados, hash, 1000); // Passa o hash para a animação
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao obter status:', error);
+        });
+    }
+
+    // Primeira atualização
+    atualizaStatus();
+    // Faz polling a cada 5 segundos
+    const intervalId = setInterval(atualizaStatus, 5000);
+  </script>
+</body>
+</html>
