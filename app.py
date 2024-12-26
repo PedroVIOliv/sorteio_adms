@@ -2,6 +2,10 @@ from flask import Flask, render_template, jsonify
 import random
 import requests
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -12,7 +16,7 @@ MEMBROS = [
     "Rodka", "Sora", "Pedro Veloso", "Vitor Legaer"
 ]
 ADMS_ATUAIS = ["Pedro Veloso", "Vitor Legaer"]
-TARGET_BLOCK_HEIGHT = 876360
+TARGET_BLOCK_HEIGHT = int(os.getenv("TARGET_BLOCK_HEIGHT", 700000))
 
 start_time = time.time()
 
