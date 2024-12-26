@@ -48,7 +48,7 @@
     }
 
     /**
-     * Função que realiza a animação de suspense,
+     * Função que realiza a animação
      * eliminando gradualmente os perdedores até que os vencedores fiquem.
      */
      function animacaoSorteio(elegiveis, vencedores, hash, time) {
@@ -85,9 +85,9 @@
                 }
                 }, time);
             }
-            }, time * (index + 1)); // Intervalo de 1 segundo entre cada eliminação
+            }, time * (index + 1)); // Intervalo entre cada eliminação
         });
-        }
+    }
 
     /**
      * Atualiza o status da página, chamando o servidor e preenchendo o HTML.
@@ -118,7 +118,7 @@
           // Inicia a animação de sorteio se o bloco foi alcançado
           if (status === 'Bloco alcançado!' && adms_selecionados.length > 0) {
             clearInterval(intervalId); // Para o polling
-            animacaoSorteio(elegiveis, adms_selecionados, hash, 1000); // Passa o hash para a animação
+            animacaoSorteio(elegiveis, adms_selecionados, hash, 2000); // Passa o hash para a animação
           }
         })
         .catch(error => {
