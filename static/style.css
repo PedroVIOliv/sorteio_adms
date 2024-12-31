@@ -1,95 +1,43 @@
-/* Estilos gerais */
 body {
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     background-color: #f4f4f4;
     color: #333;
-}
-
-.container {
+  }
+  
+  .container {
     max-width: 600px;
     margin: 50px auto;
-    background: white;
+    background: #fff;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    text-align: center;
-    color: #4CAF50;
-}
-
-h2 {
-    margin-top: 20px;
-    color: #333;
-}
-
-p {
-    font-size: 1.1em;
-}
-
-/* Lista de membros */
-ul {
+  }
+  
+  ul#listaMembros {
     list-style: none;
     padding: 0;
-}
-
-ul#listaElegiveis li {
-    font-size: 1em;
+  }
+  ul#listaMembros li {
+    margin: 4px 0;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    margin: 4px 0;
     text-align: center;
-    color: black; /* Todos os nomes começam em preto */
-    transition: opacity 2s ease, transform 2s ease;
-}
-
-/* Membros sendo eliminados */
-ul#listaElegiveis li.removendo {
-    color: #e81a0b;  /* Agora este seletor tem mesma especificidade que o anterior */
-    border-color: #de4141;
-    opacity: 0;
-    transform: scale(0.9);
-}
-
-
-li.removendo {
-    color: #e81a0b;  /* fica vermelho */
+    transition: all 2s ease;
+  }
+  
+  /* Eliminated transition */
+  li.removendo {
+    color: #e81a0b;      /* text goes red */
     border-color: #d53737;
-    opacity: 0;   /* desaparece */
-    transform: scale(0.9); /* encolhe */
-}
-
-/* Membros vencedores */
-ul#listaElegiveis li.vencedor {
-    color: #4CAF50;
+    opacity: 0;          /* fade out */
+    transform: scale(0.8);
+  }
+  
+  /* Winners green highlight */
+  li.vencedor {
     font-weight: bold;
+    color: #4CAF50;
     border-color: #4CAF50;
     background-color: #E8F5E9;
-}
-
-
-li.vencedor {
-    color: #4CAF50; /* Fica verde para indicar os vencedores */
-    font-weight: bold;
-    border-color: #4CAF50;
-    background-color: #E8F5E9; /* Fundo leve para destaque */
-}
-
-/* Animação do body ao final do sorteio */
-body.sorteio-final {
-    animation: piscar 1s infinite alternate; /* Efeito visual */
-}
-
-/* Efeito de piscar */
-@keyframes piscar {
-    0% {
-        background-color: #f4f4f4;
-    }
-    100% {
-        background-color: #E8F5E9;
-    }
-}
+  }
