@@ -19,7 +19,7 @@ ORIGINAL_LIST.sort()
 
 TARGET_BLOCK_HEIGHT = int(os.getenv("TARGET_BLOCK_HEIGHT", 700000))
 ELIMINATION_INTERVAL = int(os.getenv("ELIMINATION_INTERVAL", 20)) # seconds between each elimination
-INTERVAL_BEFORE_START = 0   # seconds to wait before starting the reveal
+INTERVAL_BEFORE_START = int(os.getenv("INTERVAL_BEFORE_START", 60)) # seconds before starting the reveal
 
 # Global dict to store info after the block is reached
 sorteio_data = {

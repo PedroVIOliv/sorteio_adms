@@ -14,15 +14,40 @@
     <p><strong>Status:</strong> <span id="spanStatus"></span></p>
     <p><strong>Hash:</strong> <span id="spanHash"></span></p>
 
+    <button id="unmuteButton" onclick="unmute()">🔊 Desmutar</button>
+
     <h2>Participantes</h2>
     <ul id="listaMembros"></ul>
   </div>
 
   <script>
+    // Load sounds
+    const eliminationSound = new Audio('/static/elimination.mp3');
+    const winnerSound = new Audio('/static/winner.wav');
+    const preparationSound = new Audio('/static/preparation.wav');
+
+    function unmute() {
+      // Play each sound momentarily to "unlock" them
+      Promise.all([
+        eliminationSound.play().then(() => eliminationSound.pause()),
+        winnerSound.play().then(() => winnerSound.pause()),
+        preparationSound.play().then(() => preparationSound.pause()),
+      ])
+        .then(() => {
+          alert("Áudio desbloqueado com sucesso!");
+          document.getElementById('unmuteButton').style.display = 'none'; // Hide the button after unmuting
+        })
+        .catch(err => {
+          console.warn("Failed to unlock audio playback:", err);
+          alert("Erro ao desbloquear áudio. Tente novamente.");
+        });
+    }
+    
     const eliminationInterval = {{ elimination_interval }}; // seconds
     let alreadyBuilt = false;       // If we've already built the list
     let previouslyEliminated = [];  // track who was eliminated in the last poll
-
+    let preparationSoundPlayed = false; // Ensure the preparation sound plays only once
+  
     // Dynamically inject CSS for elimination interval
     document.addEventListener("DOMContentLoaded", () => {
       const styleSheet = document.createElement("style");
@@ -33,8 +58,7 @@
       `;
       document.head.appendChild(styleSheet);
     });
-    
-
+  
     function atualizaStatus() {
       fetch('/status.json')
         .then(res => res.json())
@@ -49,14 +73,22 @@
             restantes = [],
             adms_selecionados = []
           } = data;
-
+  
           // Update textual info
           document.getElementById('spanBlocoAlvo').textContent = bloco_alvo;
           document.getElementById('spanAlturaAtual').textContent =
             altura_atual ?? 'Indisponível';
           document.getElementById('spanStatus').textContent = status;
           document.getElementById('spanHash').textContent = hash || 'Indisponível';
-
+  
+          // Handle preparation sound
+          if (status.includes("Bloco alcançado") && !preparationSoundPlayed) {
+            preparationSound.play().catch(err => {
+              console.warn("Audio playback failed:", err);
+            });
+            preparationSoundPlayed = true;
+          }
+  
           // Build the list in original order, but only once
           const ul = document.getElementById('listaMembros');
           if (!alreadyBuilt) {
@@ -68,7 +100,7 @@
               ul.appendChild(li);
             });
             alreadyBuilt = true;
-
+  
             // Immediately remove already eliminated members
             eliminados.forEach(name => {
               const li = document.querySelector(`li[data-membro="${name}"]`);
@@ -77,22 +109,28 @@
               }
             });
           }
-
+  
           // Figure out which members are newly eliminated
           const newEliminations = eliminados.filter(name => !previouslyEliminated.includes(name));
-
-          // Animate out the newly eliminated
+  
+          // Play a sound and animate out the newly eliminated
           newEliminations.forEach(name => {
+            eliminationSound.play().catch(err => {
+              console.warn("Audio playback failed:", err);
+            });
+  
             const li = document.querySelector(`li[data-membro="${name}"]`);
             if (li) {
               li.classList.add('removendo');  // trigger CSS transition
-              // remove from DOM after the transition is done
-              setTimeout(() => li.remove(), eliminationInterval*1000); // match your CSS duration
+              setTimeout(() => li.remove(), eliminationInterval * 1000);
             }
           });
-
-          // For the final winners, highlight them
-          if (adms_selecionados.length === 2) {
+  
+          // If we have our final winners, play the winner sound
+          if (adms_selecionados.length === 2 && previouslyEliminated.length !== eliminados.length) {
+            winnerSound.play().catch(err => {
+              console.warn("Audio playback failed:", err);
+            });
             adms_selecionados.forEach(winner => {
               const li = document.querySelector(`li[data-membro="${winner}"]`);
               if (li) {
@@ -100,15 +138,16 @@
               }
             });
           }
-
+  
           // Update previouslyEliminated
           previouslyEliminated = eliminados;
         })
         .catch(err => console.error("Erro ao obter status:", err));
     }
-
+  
+    // Immediately fetch status, and keep polling
     atualizaStatus();
-    setInterval(atualizaStatus, 300);
+    setInterval(atualizaStatus, 500);
   </script>
 </body>
 </html>
