@@ -55,6 +55,14 @@
               ul.appendChild(li);
             });
             alreadyBuilt = true;
+
+            // Immediately remove already eliminated members
+            eliminados.forEach(name => {
+              const li = document.querySelector(`li[data-membro="${name}"]`);
+              if (li) {
+                li.remove();
+              }
+            });
           }
 
           // Figure out which members are newly eliminated
@@ -85,7 +93,7 @@
         })
         .catch(err => console.error("Erro ao obter status:", err));
     }
-
+    
     atualizaStatus();
     setInterval(atualizaStatus, 500);
   </script>
