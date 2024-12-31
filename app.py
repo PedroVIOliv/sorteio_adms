@@ -51,7 +51,7 @@ def get_block_hash(height):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", elimination_interval=ELIMINATION_INTERVAL)
 
 @app.route("/status.json")
 def status_json():

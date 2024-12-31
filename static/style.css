@@ -23,7 +23,6 @@ body {
     border: 1px solid #ddd;
     border-radius: 4px;
     text-align: center;
-    transition: all 20s ease;
   }
   
   /* Eliminated transition */

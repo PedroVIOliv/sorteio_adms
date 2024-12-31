@@ -19,8 +19,21 @@
   </div>
 
   <script>
+    const eliminationInterval = {{ elimination_interval }}; // seconds
     let alreadyBuilt = false;       // If we've already built the list
     let previouslyEliminated = [];  // track who was eliminated in the last poll
+
+    // Dynamically inject CSS for elimination interval
+    document.addEventListener("DOMContentLoaded", () => {
+      const styleSheet = document.createElement("style");
+      styleSheet.textContent = `
+          ul#listaMembros li {
+              transition: all ${eliminationInterval}s ease;
+          }
+      `;
+      document.head.appendChild(styleSheet);
+    });
+    
 
     function atualizaStatus() {
       fetch('/status.json')
@@ -74,7 +87,7 @@
             if (li) {
               li.classList.add('removendo');  // trigger CSS transition
               // remove from DOM after the transition is done
-              setTimeout(() => li.remove(), 20000); // match your CSS duration
+              setTimeout(() => li.remove(), eliminationInterval*1000); // match your CSS duration
             }
           });
 
