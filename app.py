@@ -15,13 +15,16 @@ ORIGINAL_LIST = [
     "Luis Afonso", "Miguel saboroso", "Phasma", "Sann",
     "Rodka", "Sora", "Pedro Veloso", "Vitor Legaer"
 ]
+ORIGINAL_LIST.sort()
 
 TARGET_BLOCK_HEIGHT = int(os.getenv("TARGET_BLOCK_HEIGHT", 700000))
-ELIMINATION_INTERVAL = 2  # seconds between each elimination
+ELIMINATION_INTERVAL = int(os.getenv("ELIMINATION_INTERVAL", 20)) # seconds between each elimination
+INTERVAL_BEFORE_START = 0   # seconds to wait before starting the reveal
 
 # Global dict to store info after the block is reached
 sorteio_data = {
-    "start_time": None,         # when reveal started
+    "block_reached_time": None, # when we detect the target block
+    "start_time": None,         # when reveal actually starts
     "block_hash": None,         # for seeding
     "elimination_order": [],    # entire random order (secret)
     "losers_order": [],         # everyone except final 2, in order
@@ -54,12 +57,17 @@ def index():
 def status_json():
     current_height = get_current_block_height()
 
-    # If not started, check if we can start
-    if sorteio_data["start_time"] is None:
+    # 1) If we haven't reached the target block yet, keep waiting
+    if not sorteio_data["block_reached_time"]:
         if current_height and current_height >= TARGET_BLOCK_HEIGHT:
-            _start_reveal()  # sets start_time, block_hash, etc.
+            # Mark the time we reached the block (once only)
+            sorteio_data["block_reached_time"] = time.time()
+            # Also, save the block hash now
+            block_hash = get_block_hash(TARGET_BLOCK_HEIGHT)
+            if block_hash:
+                sorteio_data["block_hash"] = block_hash
         else:
-            # Still waiting, return basic status
+            # Still waiting for the block, return a simple status
             return jsonify({
                 "bloco_alvo": TARGET_BLOCK_HEIGHT,
                 "altura_atual": current_height,
@@ -71,18 +79,41 @@ def status_json():
                 "adms_selecionados": []
             })
 
-    # If started, we are in the reveal phase or done
+    # 2) If the block is reached but the reveal hasn't started,
+    #    check if the waiting period has passed.
+    if sorteio_data["block_reached_time"] and not sorteio_data["start_time"]:
+        time_since_block = time.time() - sorteio_data["block_reached_time"]
+        if time_since_block < INTERVAL_BEFORE_START:
+            # We are still waiting the interval to start the reveal
+            seconds_left = int(INTERVAL_BEFORE_START - time_since_block)
+            return jsonify({
+                "bloco_alvo": TARGET_BLOCK_HEIGHT,
+                "altura_atual": current_height,
+                "status": f"Bloco alcançado! Aguardando {seconds_left} segundos antes de iniciar o sorteio...",
+                "hash": sorteio_data["block_hash"],
+                "all_members": ORIGINAL_LIST,
+                "eliminados": [],
+                "restantes": ORIGINAL_LIST,
+                "adms_selecionados": []
+            })
+        else:
+            # Time is up, let's start the reveal
+            _start_reveal()
+
+    # 3) If we are here, the reveal has started, so show the reveal status
     return jsonify(_reveal_status(current_height))
 
 def _start_reveal():
-    """Initialize everything once the block is reached."""
+    """Initialize everything once the waiting period ends."""
     sorteio_data["start_time"] = time.time()
-    block_hash = get_block_hash(TARGET_BLOCK_HEIGHT)
-    if not block_hash:
-        return
-    sorteio_data["block_hash"] = block_hash
 
     # SECRET shuffle (for elimination order)
+    # The block hash was already fetched when block_reached_time was set
+    block_hash = sorteio_data["block_hash"]
+    if not block_hash:
+        # In case something went wrong, just return
+        return
+
     random.seed(int(block_hash, 16))
     elimination_order = random.sample(ORIGINAL_LIST, len(ORIGINAL_LIST))
     sorteio_data["elimination_order"] = elimination_order
@@ -93,7 +124,7 @@ def _start_reveal():
     sorteio_data["final_winners"] = elimination_order[-2:]
 
 def _reveal_status(current_height):
-    """Return how many are eliminated so far."""
+    """Return how many are eliminated so far based on elapsed time since start."""
     elapsed = time.time() - sorteio_data["start_time"]
     intervals_passed = int(elapsed // ELIMINATION_INTERVAL)
 
@@ -105,7 +136,6 @@ def _reveal_status(current_height):
     already_eliminated = sorteio_data["losers_order"][:intervals_passed]
     remaining = [m for m in ORIGINAL_LIST if m not in already_eliminated]  # keep original order
 
-    # If we have only 2 left, the game is done
     if len(remaining) == 2:
         status = "Bloco alcançado e sorteio concluído!"
         adms_selecionados = sorteio_data["final_winners"]

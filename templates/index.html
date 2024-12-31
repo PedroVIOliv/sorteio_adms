@@ -74,7 +74,7 @@
             if (li) {
               li.classList.add('removendo');  // trigger CSS transition
               // remove from DOM after the transition is done
-              setTimeout(() => li.remove(), 2000); // match your CSS duration
+              setTimeout(() => li.remove(), 20000); // match your CSS duration
             }
           });
 
@@ -93,9 +93,9 @@
         })
         .catch(err => console.error("Erro ao obter status:", err));
     }
-    
+
     atualizaStatus();
-    setInterval(atualizaStatus, 500);
+    setInterval(atualizaStatus, 300);
   </script>
 </body>
 </html>
