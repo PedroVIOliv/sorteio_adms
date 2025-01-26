@@ -10,10 +10,10 @@ app = Flask(__name__)
 
 # The order we want to show on the page:
 ORIGINAL_LIST = [
-    "Alexandre", "Arthur Faria", "Arthur The Smiths", "Arthur Roraima",
+    "Alexandre", "Arthur Faria", "Arthur The Smiths",
     "Bernardo", "Catatau", "Fabio", "Raichu", "Sailor",
     "Luis Afonso", "Miguel saboroso", "Phasma", "Sann",
-    "Rodka", "Sora", "Pedro Veloso", "Vitor Legaer"
+    "Rodka", "Sora", "Vitor Legaer"
 ]
 ORIGINAL_LIST.sort()
 
